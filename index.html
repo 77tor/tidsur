@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Klasserom Tidtaker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f4f8;
+      color: #333;
+      transition: background-color 0.3s;
+    }
+    
+    /* Skjerm-blinking når tiden er ute */
+    body.alarm-active {
+      animation: flash-red 0.8s infinite alternate;
+    }
+    @keyframes flash-red {
+      0% { background-color: #f0f4f8; }
+      100% { background-color: #ff4d4d; }
+    }
+
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 360px;
+    }
+    h2 { margin-top: 0; color: #2c3e50; }
+    .display {
+      font-size: 4.5rem;
+      font-weight: bold;
+      margin: 1rem 0;
+      font-family: monospace;
+      color: #2c3e50;
+    }
+    .inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .inputs input {
+      width: 70px;
+      padding: 8px;
+      font-size: 1.1rem;
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+    .sound-select {
+      margin-bottom: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .sound-select select {
+      padding: 8px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 85%;
+    }
+    .preset-btns, .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 1.2rem;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #3498db;
+      color: white;
+      transition: transform 0.1s, background 0.2s;
+    }
+    button:active { transform: scale(0.96); }
+    button.start { background-color: #2ecc71; font-size: 1.1rem; padding: 12px 24px; }
+    button.start:hover { background-color: #27ae60; }
+    button.reset { background-color: #e74c3c; font-size: 1.1rem; padding: 12px 24px; }
+    button.reset:hover { background-color: #c0392b; }
+    button.preset { background-color: #8e44ad; }
+    button.preset:hover { background-color: #732d91; }
+
+    /* Modal (Pop-up vindu) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      max-width: 320px;
+      width: 90%;
+    }
+    .modal-content h1 {
+      color: #e74c3c;
+      margin-top: 0;
+      font-size: 2.2rem;
+    }
+    .modal-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 1.5rem;
+    }
+    .modal-btns button {
+      padding: 14px;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Klasserom Tidtaker</h2>
+    
+    <!-- Standardtider -->
+    <div class="preset-btns">
+      <button class="preset" onclick="setPreset(2)">2 min</button>
+      <button class="preset" onclick="setPreset(5)">5 min</button>
+      <button class="preset" onclick="setPreset(7)">7 min</button>
+      <button class="preset" onclick="setPreset(10)">10 min</button>
+      <button class="preset" onclick="setPreset(15)">15 min</button>
+    </div>
+
+    <!-- Valgfri tid -->
+    <div class="inputs">
+      <input type="number" id="min" placeholder="Min" min="0" value="5">
+      <input type="number" id="sec" placeholder="Sek" min="0" max="59" value="0">
+    </div>
+
+    <!-- Lydvalg og Avspillingslengde -->
+    <div class="sound-select">
+      <label for="soundType"><strong>Lyd ved slutt:</strong></label>
+      <select id="soundType">
+        <option value="classic">🔔 Klassisk Alarm</option>
+        <option value="scifi">🚀 Space / Sci-Fi</option>
+        <option value="arcade">🎮 8-Bit Arkade</option>
+        <option value="fanfare">🎺 Triumf / Seier</option>
+      </select>
+
+      <label for="soundRepeat"><strong>Hvor mange ganger:</strong></label>
+      <select id="soundRepeat">
+        <option value="1">1 gang</option>
+        <option value="2">2 ganger</option>
+        <option value="3">3 ganger</option>
+        <option value="loop" selected>Til den slås av</option>
+      </select>
+    </div>
+
+    <!-- Tidsvisning -->
+    <div class="display" id="timerDisplay">05:00</div>
+
+    <!-- Kontrollknapper -->
+    <div class="controls">
+      <button class="start" id="startBtn" onclick="toggleTimer()">Start</button>
+      <button class="reset" onclick="resetTimer()">Nullstill</button>
+    </div>
+  </div>
+
+  <!-- Pop-up Modal ved utløpt tid -->
+  <div class="modal-overlay" id="alarmModal">
+    <div class="modal-content">
+      <h1>⏰ Tiden er ute!</h1>
+      <p>Hva vil du gjøre nå?</p>
+      <div class="modal-btns">
+        <button class="start" onclick="restartSameTime()">🔄 Kjør samme tid på nytt</button>
+        <button class="reset" onclick="closeModal()">✖ Lukk</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let timer = null;
+    let alarmInterval = null;
+    let totalSeconds = 300;
+    let initialSeconds = 300;
+    let isRunning = false;
+
+    const display = document.getElementById('timerDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const minInput = document.getElementById('min');
+    const secInput = document.getElementById('sec');
+    const soundTypeSelect = document.getElementById('soundType');
+    const soundRepeatSelect = document.getElementById('soundRepeat');
+    const modal = document.getElementById('alarmModal');
+
+    // Lydgeneratorer
+    function playSoundEffect() {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const type = soundTypeSelect.value;
+
+      if (type === 'classic') {
+        [0, 0.2, 0.4].forEach(delay => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime + delay);
+          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + 0.15);
+        });
+      } 
+      else if (type === 'scifi') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.8);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.8);
+      } 
+      else if (type === 'arcade') {
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+        notes.forEach((freq, index) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (index * 0.08));
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (index * 0.08));
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (index * 0.08) + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + (index * 0.08));
+          osc.stop(audioCtx.currentTime + (index * 0.08) + 0.08);
+        });
+      } 
+      else if (type === 'fanfare') {
+        const notes = [
+          { f: 523.25, d: 0.15, t: 0 },
+          { f: 659.25, d: 0.15, t: 0.15 },
+          { f: 783.99, d: 0.15, t: 0.3 },
+          { f: 1046.50, d: 0.5, t: 0.45 }
+        ];
+        notes.forEach(note => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(note.f, audioCtx.currentTime + note.t);
+          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + note.t);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.t + note.d);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + note.t);
+          osc.stop(audioCtx.currentTime + note.t + note.d);
+        });
+      }
+    }
+
+    // Trigger alarm-effekt og åpne modal
+    function triggerAlarm() {
+      document.body.classList.add('alarm-active');
+      modal.style.display = 'flex';
+      
+      const repeatVal = soundRepeatSelect.value;
+      playSoundEffect(); // Spill 1. gang umiddelbart
+
+      if (repeatVal === 'loop') {
+        // Fortsett å spille hvert 2. sekund til det blir stoppet
+        alarmInterval = setInterval(playSoundEffect, 2000);
+      } else {
+        let count = 1;
+        const maxCount = parseInt(repeatVal);
+        if (count < maxCount) {
+          alarmInterval = setInterval(() => {
+            playSoundEffect();
+            count++;
+            if (count >= maxCount) {
+              clearInterval(alarmInterval);
+            }
+          }, 2000);
+        }
+      }
+    }
+
+    function stopAlarmEffects() {
+      document.body.classList.remove('alarm-active');
+      if (alarmInterval) clearInterval(alarmInterval);
+    }
+
+    function closeModal() {
+      stopAlarmEffects();
+      modal.style.display = 'none';
+      resetTimer();
+    }
+
+    function restartSameTime() {
+      stopAlarmEffects();
+      modal.style.display = 'none';
+      resetTimer();
+      startTimer();
+    }
+
+    function updateDisplay() {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      display.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function setPreset(minutes) {
+      pauseTimer();
+      minInput.value = minutes;
+      secInput.value = 0;
+      applyInputTime();
+    }
+
+    function applyInputTime() {
+      const m = parseInt(minInput.value) || 0;
+      const s = parseInt(secInput.value) || 0;
+      totalSeconds = m * 60 + s;
+      initialSeconds = totalSeconds;
+      updateDisplay();
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (totalSeconds <= 0) applyInputTime();
+      if (totalSeconds <= 0) return;
+
+      isRunning = true;
+      startBtn.textContent = 'Pause';
+      startBtn.style.backgroundColor = '#f39c12';
+
+      timer = setInterval(() => {
+        totalSeconds--;
+        updateDisplay();
+
+        if (totalSeconds <= 0) {
+          clearInterval(timer);
+          isRunning = false;
+          startBtn.textContent = 'Start';
+          startBtn.style.backgroundColor = '#2ecc71';
+          triggerAlarm();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timer);
+      isRunning = false;
+      startBtn.textContent = 'Start';
+      startBtn.style.backgroundColor = '#2ecc71';
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      totalSeconds = initialSeconds;
+      updateDisplay();
+    }
+
+    minInput.addEventListener('change', applyInputTime);
+    secInput.addEventListener('change', applyInputTime);
+  </script>
+</body>
+</html>
