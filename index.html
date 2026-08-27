@@ -64,12 +64,21 @@
       gap: 8px;
       align-items: center;
     }
+    .sound-row {
+      display: flex;
+      gap: 8px;
+      width: 85%;
+      justify-content: center;
+    }
     .sound-select select {
       padding: 8px;
       font-size: 0.95rem;
       border-radius: 6px;
       border: 1px solid #ccc;
       width: 85%;
+    }
+    .sound-row select {
+      flex-grow: 1;
     }
     .preset-btns, .controls {
       display: flex;
@@ -96,6 +105,8 @@
     button.reset:hover { background-color: #c0392b; }
     button.preset { background-color: #8e44ad; }
     button.preset:hover { background-color: #732d91; }
+    button.test-btn { background-color: #7f8c8d; padding: 8px 12px; }
+    button.test-btn:hover { background-color: #95a5a6; }
 
     /* Modal (Pop-up vindu) */
     .modal-overlay {
@@ -156,12 +167,17 @@
     <!-- Lydvalg og Avspillingslengde -->
     <div class="sound-select">
       <label for="soundType"><strong>Lyd ved slutt:</strong></label>
-      <select id="soundType">
-        <option value="classic">🔔 Klassisk Alarm</option>
-        <option value="scifi">🚀 Space / Sci-Fi</option>
-        <option value="arcade">🎮 8-Bit Arkade</option>
-        <option value="fanfare">🎺 Triumf / Seier</option>
-      </select>
+      <div class="sound-row">
+        <select id="soundType">
+          <option value="Lyder/01.mp3">🎬 Filmtrailer</option>
+          <option value="Lyder/02.mp3">⏳ Nedtelling</option>
+          <option value="Lyder/03.mp3">💓 Hjerteslag</option>
+          <option value="Lyder/04.mp3">👾 Game Over</option>
+          <option value="Lyder/05.mp3">🎺 Fanfare</option>
+          <option value="Lyder/06.mp3">📞 Telefon</option>
+        </select>
+        <button class="test-btn" onclick="testSound()">▶ Prøv</button>
+      </div>
 
       <label for="soundRepeat"><strong>Hvor mange ganger:</strong></label>
       <select id="soundRepeat">
@@ -196,10 +212,11 @@
 
   <script>
     let timer = null;
-    let alarmInterval = null;
     let totalSeconds = 300;
     let initialSeconds = 300;
     let isRunning = false;
+    let currentAudio = null;
+    let playCount = 0;
 
     const display = document.getElementById('timerDisplay');
     const startBtn = document.getElementById('startBtn');
@@ -209,103 +226,56 @@
     const soundRepeatSelect = document.getElementById('soundRepeat');
     const modal = document.getElementById('alarmModal');
 
-    // Lydgeneratorer
-    function playSoundEffect() {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const type = soundTypeSelect.value;
+    // Funksjon for å teste valgt lyd
+    function testSound() {
+      stopAudio();
+      const soundFile = soundTypeSelect.value;
+      currentAudio = new Audio(soundFile);
+      currentAudio.play().catch(e => alert("Kunne ikke laste filen: " + soundFile + "\nSjekk at filen ligger i mappen 'Lyder'."));
+    }
 
-      if (type === 'classic') {
-        [0, 0.2, 0.4].forEach(delay => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.frequency.setValueAtTime(880, audioCtx.currentTime + delay);
-          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + 0.15);
+    // Spill av lyd i henhold til valgt antall repetisjoner
+    function playAlarmSound() {
+      stopAudio();
+      playCount = 0;
+      const soundFile = soundTypeSelect.value;
+      const repeatVal = soundRepeatSelect.value;
+
+      currentAudio = new Audio(soundFile);
+
+      if (repeatVal === 'loop') {
+        currentAudio.loop = true;
+      } else {
+        const maxRepeats = parseInt(repeatVal);
+        currentAudio.addEventListener('ended', function() {
+          playCount++;
+          if (playCount < maxRepeats) {
+            this.currentTime = 0;
+            this.play();
+          }
         });
-      } 
-      else if (type === 'scifi') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.8);
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.8);
-      } 
-      else if (type === 'arcade') {
-        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
-        notes.forEach((freq, index) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (index * 0.08));
-          gain.gain.setValueAtTime(0.2, audioCtx.currentTime + (index * 0.08));
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (index * 0.08) + 0.08);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(audioCtx.currentTime + (index * 0.08));
-          osc.stop(audioCtx.currentTime + (index * 0.08) + 0.08);
-        });
-      } 
-      else if (type === 'fanfare') {
-        const notes = [
-          { f: 523.25, d: 0.15, t: 0 },
-          { f: 659.25, d: 0.15, t: 0.15 },
-          { f: 783.99, d: 0.15, t: 0.3 },
-          { f: 1046.50, d: 0.5, t: 0.45 }
-        ];
-        notes.forEach(note => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(note.f, audioCtx.currentTime + note.t);
-          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + note.t);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.t + note.d);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(audioCtx.currentTime + note.t);
-          osc.stop(audioCtx.currentTime + note.t + note.d);
-        });
+      }
+
+      currentAudio.play().catch(e => console.log("Lyd-avspilling blokkert eller fil mangler."));
+    }
+
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
       }
     }
 
-    // Trigger alarm-effekt og åpne modal
     function triggerAlarm() {
       document.body.classList.add('alarm-active');
       modal.style.display = 'flex';
-      
-      const repeatVal = soundRepeatSelect.value;
-      playSoundEffect(); // Spill 1. gang umiddelbart
-
-      if (repeatVal === 'loop') {
-        // Fortsett å spille hvert 2. sekund til det blir stoppet
-        alarmInterval = setInterval(playSoundEffect, 2000);
-      } else {
-        let count = 1;
-        const maxCount = parseInt(repeatVal);
-        if (count < maxCount) {
-          alarmInterval = setInterval(() => {
-            playSoundEffect();
-            count++;
-            if (count >= maxCount) {
-              clearInterval(alarmInterval);
-            }
-          }, 2000);
-        }
-      }
+      playAlarmSound();
     }
 
     function stopAlarmEffects() {
       document.body.classList.remove('alarm-active');
-      if (alarmInterval) clearInterval(alarmInterval);
+      stopAudio();
     }
 
     function closeModal() {
