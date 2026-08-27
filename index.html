@@ -18,7 +18,6 @@
       transition: background-color 0.3s;
     }
     
-    /* Skjerm-blinking når tiden er ute */
     body.alarm-active {
       animation: flash-red 0.8s infinite alternate;
     }
@@ -29,53 +28,54 @@
 
     .container {
       background: white;
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      padding: 1.2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
       text-align: center;
-      width: 360px;
+      width: 280px;
     }
-    h2 { margin-top: 0; color: #2c3e50; }
+    h3 { margin-top: 0; margin-bottom: 0.8rem; color: #2c3e50; font-size: 1.2rem; }
     .display {
-      font-size: 4.5rem;
+      font-size: 3.2rem;
       font-weight: bold;
-      margin: 1rem 0;
+      margin: 0.5rem 0;
       font-family: monospace;
       color: #2c3e50;
     }
     .inputs {
       display: flex;
       justify-content: center;
-      gap: 10px;
-      margin-bottom: 1rem;
+      gap: 6px;
+      margin-bottom: 0.8rem;
     }
     .inputs input {
-      width: 70px;
-      padding: 8px;
-      font-size: 1.1rem;
+      width: 55px;
+      padding: 5px;
+      font-size: 0.95rem;
       text-align: center;
-      border: 2px solid #ddd;
-      border-radius: 8px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
     }
     .sound-select {
-      margin-bottom: 1.2rem;
+      margin-bottom: 0.8rem;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
       align-items: center;
+      font-size: 0.85rem;
     }
     .sound-row {
       display: flex;
-      gap: 8px;
-      width: 85%;
+      gap: 6px;
+      width: 90%;
       justify-content: center;
     }
     .sound-select select {
-      padding: 8px;
-      font-size: 0.95rem;
-      border-radius: 6px;
+      padding: 5px;
+      font-size: 0.85rem;
+      border-radius: 5px;
       border: 1px solid #ccc;
-      width: 85%;
+      width: 90%;
     }
     .sound-row select {
       flex-grow: 1;
@@ -83,29 +83,29 @@
     .preset-btns, .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
-      margin-bottom: 1.2rem;
+      margin-bottom: 0.8rem;
     }
     button {
-      padding: 10px 14px;
-      font-size: 0.95rem;
+      padding: 6px 10px;
+      font-size: 0.85rem;
       font-weight: 600;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       background-color: #3498db;
       color: white;
       transition: transform 0.1s, background 0.2s;
     }
     button:active { transform: scale(0.96); }
-    button.start { background-color: #2ecc71; font-size: 1.1rem; padding: 12px 24px; }
+    button.start { background-color: #2ecc71; font-size: 0.95rem; padding: 8px 16px; }
     button.start:hover { background-color: #27ae60; }
-    button.reset { background-color: #e74c3c; font-size: 1.1rem; padding: 12px 24px; }
+    button.reset { background-color: #e74c3c; font-size: 0.95rem; padding: 8px 16px; }
     button.reset:hover { background-color: #c0392b; }
     button.preset { background-color: #8e44ad; }
     button.preset:hover { background-color: #732d91; }
-    button.test-btn { background-color: #7f8c8d; padding: 8px 12px; }
+    button.test-btn { background-color: #7f8c8d; padding: 5px 8px; font-size: 0.8rem; }
     button.test-btn:hover { background-color: #95a5a6; }
     button.stop-sound { background-color: #f39c12; }
     button.stop-sound:hover { background-color: #d35400; }
@@ -122,34 +122,34 @@
     }
     .modal-content {
       background: white;
-      padding: 2.5rem;
-      border-radius: 16px;
+      padding: 1.5rem;
+      border-radius: 12px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      max-width: 320px;
-      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      max-width: 260px;
+      width: 85%;
     }
-    .modal-content h1 {
+    .modal-content h2 {
       color: #e74c3c;
       margin-top: 0;
-      font-size: 2.2rem;
+      font-size: 1.6rem;
     }
     .modal-btns {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 1.5rem;
+      gap: 8px;
+      margin-top: 1rem;
     }
     .modal-btns button {
-      padding: 14px;
-      font-size: 1.1rem;
+      padding: 10px;
+      font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h2>Klasserom Tidtaker</h2>
+    <h3>Klasserom Tidtaker</h3>
     
     <!-- Standardtider -->
     <div class="preset-btns">
@@ -165,7 +165,7 @@
       <input type="number" id="sec" placeholder="Sek" min="0" max="59" value="0">
     </div>
 
-    <!-- Lydvalg og Avspillingslengde -->
+    <!-- Lydvalg -->
     <div class="sound-select">
       <label for="soundType"><strong>Lyd ved slutt:</strong></label>
       <div class="sound-row">
@@ -199,11 +199,11 @@
     </div>
   </div>
 
-  <!-- Pop-up Modal ved utløpt tid -->
+  <!-- Pop-up Modal -->
   <div class="modal-overlay" id="alarmModal">
     <div class="modal-content">
-      <h1>⏰ Tiden er ute!</h1>
-      <p>Hva vil du gjøre nå?</p>
+      <h2>⏰ Tiden er ute!</h2>
+      <p style="font-size: 0.9rem;">Hva vil du gjøre nå?</p>
       <div class="modal-btns">
         <button class="stop-sound" onclick="stopAlarmEffects()">🔕 Stopp alarm</button>
         <button class="start" onclick="restartSameTime()">🔄 Kjør samme tid på nytt</button>
