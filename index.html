@@ -107,6 +107,8 @@
     button.preset:hover { background-color: #732d91; }
     button.test-btn { background-color: #7f8c8d; padding: 8px 12px; }
     button.test-btn:hover { background-color: #95a5a6; }
+    button.stop-sound { background-color: #f39c12; }
+    button.stop-sound:hover { background-color: #d35400; }
 
     /* Modal (Pop-up vindu) */
     .modal-overlay {
@@ -155,7 +157,6 @@
       <button class="preset" onclick="setPreset(5)">5 min</button>
       <button class="preset" onclick="setPreset(7)">7 min</button>
       <button class="preset" onclick="setPreset(10)">10 min</button>
-      <button class="preset" onclick="setPreset(15)">15 min</button>
     </div>
 
     <!-- Valgfri tid -->
@@ -204,6 +205,7 @@
       <h1>⏰ Tiden er ute!</h1>
       <p>Hva vil du gjøre nå?</p>
       <div class="modal-btns">
+        <button class="stop-sound" onclick="stopAlarmEffects()">🔕 Stopp alarm</button>
         <button class="start" onclick="restartSameTime()">🔄 Kjør samme tid på nytt</button>
         <button class="reset" onclick="closeModal()">✖ Lukk</button>
       </div>
@@ -226,7 +228,6 @@
     const soundRepeatSelect = document.getElementById('soundRepeat');
     const modal = document.getElementById('alarmModal');
 
-    // Funksjon for å teste valgt lyd
     function testSound() {
       stopAudio();
       const soundFile = soundTypeSelect.value;
@@ -234,7 +235,6 @@
       currentAudio.play().catch(e => alert("Kunne ikke laste filen: " + soundFile + "\nSjekk at filen ligger i mappen 'Lyder'."));
     }
 
-    // Spill av lyd i henhold til valgt antall repetisjoner
     function playAlarmSound() {
       stopAudio();
       playCount = 0;
